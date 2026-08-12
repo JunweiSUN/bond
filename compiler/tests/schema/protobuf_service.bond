@@ -1,0 +1,20 @@
+namespace tests
+
+struct Request
+{
+    1: string query;
+    2: int32 limit;
+}
+
+struct Response
+{
+    1: list<string> results;
+    2: int32 total;
+}
+
+service SimpleService
+{
+    Response Search(Request);
+    void SaveItem(Request);
+    Response GetAll(void);
+}

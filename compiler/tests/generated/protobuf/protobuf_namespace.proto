@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package tests.example.deep;
+
+message NamespacedStruct {
+    string value = 1;
+}

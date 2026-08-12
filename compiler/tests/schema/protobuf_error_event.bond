@@ -1,0 +1,11 @@
+namespace tests
+
+struct Payload
+{
+    1: string data;
+}
+
+service EventService
+{
+    nothing Notify(Payload);
+}

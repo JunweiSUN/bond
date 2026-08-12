@@ -1,7 +1,7 @@
 -- Copyright (c) Microsoft. All rights reserved.
 -- Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-{-# LANGUAGE OverloadedStrings, QuasiQuotes, RecordWildCards, ScopedTypeVariables, TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings, QuasiQuotes, RecordWildCards, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 {-|
@@ -20,9 +20,8 @@ module Language.Bond.Syntax.JSON
 
 import Control.Applicative
 import Data.Aeson
-import Data.Aeson.TH
 import Data.Aeson.Types
-import Data.HashMap.Strict (member)
+import Data.Maybe (isJust)
 import Data.Text.Lazy (unpack)
 import Language.Bond.Syntax.Types hiding (MethodType(..))
 import qualified Language.Bond.Syntax.Types as BST (MethodType(..))
@@ -220,15 +219,6 @@ instance ToJSON Field where
         , "fieldDefault" .= fieldDefault f
         ]
 
-instance FromJSON Constraint where
-    parseJSON (String "value") = pure Value
-    parseJSON x = modifyFailure
-                    (const $ "Expected a representation of Constraint but found: " ++ show x)
-                    empty
-
-instance ToJSON Constraint where
-    toJSON Value = "value"
-
 instance FromJSON Namespace where
     parseJSON (Object v) =
         Namespace <$>
@@ -247,22 +237,6 @@ instance ToJSON Namespace where
         , "name" .= nsName
         ]
 
-instance FromJSON Bond where
-    parseJSON (Object v) =
-        Bond <$>
-            v .: "imports" <*>
-            v .: "namespaces" <*>
-            v .: "declarations"
-    parseJSON x = modifyFailure
-                    (const $ "Expected an object but found: " ++ show x)
-                    empty
-
-instance ToJSON Bond where
-    toJSON Bond {..} = object
-        [ "imports" .= bondImports
-        , "namespaces" .= bondNamespaces
-        , "declarations" .= bondDeclarations
-        ]
 
 instance ToJSON BST.MethodType where
     toJSON BST.Void = Null
@@ -270,7 +244,19 @@ instance ToJSON BST.MethodType where
     toJSON (BST.Streaming t) = toJSON t
 
 data MethodStreamingTag = Unary | Client | Server | Duplex deriving Show
-$(deriveJSON defaultOptions ''MethodStreamingTag)
+
+instance FromJSON MethodStreamingTag where
+    parseJSON (String "Unary") = pure Unary
+    parseJSON (String "Client") = pure Client
+    parseJSON (String "Server") = pure Server
+    parseJSON (String "Duplex") = pure Duplex
+    parseJSON x = modifyFailure (const $ "Expected MethodStreamingTag but found: " ++ show x) empty
+
+instance ToJSON MethodStreamingTag where
+    toJSON Unary = "Unary"
+    toJSON Client = "Client"
+    toJSON Server = "Server"
+    toJSON Duplex = "Duplex"
 
 methodStreamingTag :: BST.MethodType -> BST.MethodType -> MethodStreamingTag
 methodStreamingTag input result = case (input, result) of
@@ -311,7 +297,7 @@ instance FromJSON Method where
           o .: "methodName" <*>
           methodInput
         <* ensureNoMethodStreaming
-        where ensureNoMethodStreaming = if member "methodStreaming" o
+        where ensureNoMethodStreaming = if isJust (parseMaybe (.: "methodStreaming") o :: Maybe Value)
                                           then fail "Encountered Event with \"methodStreaming\" member. Events cannot have this member."
                                           else pure ()
               methodInput = maybe BST.Void BST.Unary <$> (o .:? "methodInput")
@@ -358,10 +344,151 @@ instance FromJSON Method where
           invalidNothingComboMsg :: String -> MethodStreamingTag -> String
           invalidNothingComboMsg dir streaming = unpack [lt|Method marked as #{show streaming}, but has void #{dir}|]
 
-$(deriveJSON defaultOptions ''Modifier)
-$(deriveJSON defaultOptions ''Attribute)
-$(deriveJSON defaultOptions ''Constant)
-$(deriveJSON defaultOptions ''TypeParam)
-$(deriveJSON defaultOptions ''Declaration)
-$(deriveJSON defaultOptions ''Import)
-$(deriveJSON defaultOptions ''Language)
+instance FromJSON Constraint where
+    parseJSON (String "Value") = pure Value
+    parseJSON x = modifyFailure (const $ "Expected Constraint but found: " ++ show x) empty
+
+instance ToJSON Constraint where
+    toJSON Value = "Value"
+
+instance FromJSON Modifier where
+    parseJSON (String "Optional") = pure Optional
+    parseJSON (String "Required") = pure Required
+    parseJSON (String "RequiredOptional") = pure RequiredOptional
+    parseJSON x = modifyFailure (const $ "Expected Modifier but found: " ++ show x) empty
+
+instance ToJSON Modifier where
+    toJSON Optional = "Optional"
+    toJSON Required = "Required"
+    toJSON RequiredOptional = "RequiredOptional"
+
+instance FromJSON Attribute where
+    parseJSON = withObject "Attribute" $ \o ->
+        Attribute <$> o .: "attrName" <*> o .: "attrValue"
+
+instance ToJSON Attribute where
+    toJSON Attribute{..} = object ["attrName" .= attrName, "attrValue" .= attrValue]
+
+instance FromJSON Constant where
+    parseJSON = withObject "Constant" $ \o ->
+        Constant <$> o .: "constantName" <*> o .:? "constantValue"
+
+instance ToJSON Constant where
+    toJSON Constant{..} = object ["constantName" .= constantName, "constantValue" .= constantValue]
+
+instance FromJSON TypeParam where
+    parseJSON = withObject "TypeParam" $ \o ->
+        TypeParam <$> o .: "paramName" <*> o .:? "paramConstraint"
+
+instance ToJSON TypeParam where
+    toJSON TypeParam{..} = object ["paramName" .= paramName, "paramConstraint" .= paramConstraint]
+
+instance FromJSON Language where
+    parseJSON (String "Cpp") = pure Cpp
+    parseJSON (String "Cs") = pure Cs
+    parseJSON (String "Java") = pure Java
+    parseJSON (String "Protobuf") = pure Protobuf
+    parseJSON x = modifyFailure (const $ "Expected Language but found: " ++ show x) empty
+
+instance ToJSON Language where
+    toJSON Cpp = "Cpp"
+    toJSON Cs = "Cs"
+    toJSON Java = "Java"
+    toJSON Protobuf = "Protobuf"
+
+instance FromJSON Import where
+    parseJSON = withObject "Import" $ \o -> Import <$> o .: "tag"
+
+instance ToJSON Import where
+    toJSON (Import path) = object ["tag" .= path]
+
+instance FromJSON Declaration where
+    parseJSON = withObject "Declaration" $ \o -> do
+        tag <- o .: "tag" :: Parser String
+        case tag of
+            "Struct" -> Struct <$>
+                o .:? "declNamespaces" .!= [] <*>
+                o .:? "declAttributes" .!= [] <*>
+                o .: "declName" <*>
+                o .:? "declParams" .!= [] <*>
+                o .:? "structBase" <*>
+                o .:? "structFields" .!= []
+            "Enum" -> Enum <$>
+                o .:? "declNamespaces" .!= [] <*>
+                o .:? "declAttributes" .!= [] <*>
+                o .: "declName" <*>
+                o .:? "enumConstants" .!= []
+            "Forward" -> Forward <$>
+                o .:? "declNamespaces" .!= [] <*>
+                o .: "declName" <*>
+                o .:? "declParams" .!= []
+            "Alias" -> Alias <$>
+                o .:? "declNamespaces" .!= [] <*>
+                o .: "declName" <*>
+                o .:? "declParams" .!= [] <*>
+                o .: "aliasType"
+            "Service" -> Service <$>
+                o .:? "declNamespaces" .!= [] <*>
+                o .:? "declAttributes" .!= [] <*>
+                o .: "declName" <*>
+                o .:? "declParams" .!= [] <*>
+                o .:? "serviceBase" <*>
+                o .:? "serviceMethods" .!= []
+            _ -> fail $ "Unknown Declaration tag: " ++ tag
+
+instance ToJSON Declaration where
+    toJSON Struct{..} = object
+        [ "tag" .= String "Struct"
+        , "declNamespaces" .= declNamespaces
+        , "declAttributes" .= declAttributes
+        , "declName" .= declName
+        , "declParams" .= declParams
+        , "structBase" .= structBase
+        , "structFields" .= structFields
+        ]
+    toJSON Enum{..} = object
+        [ "tag" .= String "Enum"
+        , "declNamespaces" .= declNamespaces
+        , "declAttributes" .= declAttributes
+        , "declName" .= declName
+        , "enumConstants" .= enumConstants
+        ]
+    toJSON Forward{..} = object
+        [ "tag" .= String "Forward"
+        , "declNamespaces" .= declNamespaces
+        , "declName" .= declName
+        , "declParams" .= declParams
+        ]
+    toJSON Alias{..} = object
+        [ "tag" .= String "Alias"
+        , "declNamespaces" .= declNamespaces
+        , "declName" .= declName
+        , "declParams" .= declParams
+        , "aliasType" .= aliasType
+        ]
+    toJSON Service{..} = object
+        [ "tag" .= String "Service"
+        , "declNamespaces" .= declNamespaces
+        , "declAttributes" .= declAttributes
+        , "declName" .= declName
+        , "declParams" .= declParams
+        , "serviceBase" .= serviceBase
+        , "serviceMethods" .= serviceMethods
+        ]
+
+instance FromJSON Bond where
+    parseJSON (Object v) =
+        Bond <$>
+            v .: "imports" <*>
+            v .: "namespaces" <*>
+            v .: "declarations"
+    parseJSON x = modifyFailure
+                    (const $ "Expected an object but found: " ++ show x)
+                    empty
+
+instance ToJSON Bond where
+    toJSON Bond {..} = object
+        [ "imports" .= bondImports
+        , "namespaces" .= bondNamespaces
+        , "declarations" .= bondDeclarations
+        ]

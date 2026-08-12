@@ -1,0 +1,6 @@
+namespace directory.test
+
+struct Second
+{
+    1: int32 value;
+}

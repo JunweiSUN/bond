@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package tests;
+
+message FieldModifiers {
+    bool o = 1;
+    int32 r = 2;
+    optional int32 m_nothing = 3;
+}

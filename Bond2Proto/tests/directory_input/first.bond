@@ -1,0 +1,6 @@
+namespace directory.test
+
+struct First
+{
+    1: string value;
+}

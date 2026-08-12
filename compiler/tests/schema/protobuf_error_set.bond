@@ -1,0 +1,6 @@
+namespace tests
+
+struct HasSet
+{
+    1: set<string> names;
+}

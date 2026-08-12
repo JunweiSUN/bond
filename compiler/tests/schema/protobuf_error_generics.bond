@@ -1,0 +1,6 @@
+namespace tests
+
+struct Generic<T>
+{
+    1: T value;
+}

@@ -261,17 +261,17 @@ javaBoxedTypeMapping = TypeMapping
 infixr 6 <<>>
 
 (<<>>) :: (Monoid r, Monad m) => m r -> m r -> m r
-(<<>>) = liftM2 (<>)
+(<<>>) = liftA2 (<>)
 
 infixr 6 <>>
 
 (<>>) :: (Monoid r, Monad m) => r -> m r -> m r
-(<>>) x = liftM (x <>)
+(<>>) x = fmap (x <>)
 
 infixr 6 <<>
 
 (<<>) :: (Monoid r, Monad m) => m r -> r -> m r
-(<<>) x y = liftM (<> y) x
+(<<>) x y = fmap (<> y) x
 
 pureText :: ToText a => a -> TypeNameBuilder
 pureText = pure . toText

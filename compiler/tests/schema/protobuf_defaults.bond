@@ -1,0 +1,12 @@
+namespace tests
+
+struct Defaults
+{
+    0: bool m_bool_false = false;
+    1: int32 m_int_zero = 0;
+    2: double m_double_zero = 0.0;
+    3: string m_str_empty = "";
+    4: int64 m_nothing = nothing;
+    5: float m_float_zero = 0.0;
+    6: uint64 m_uint64_zero = 0;
+}

@@ -35,11 +35,12 @@ main = do
     options <- (if null args then withArgs ["--help=all"] else id) getOptions
     setJobs $ jobs options
     case options of
-        Cpp {..}    -> cppCodegen options
-        Cs {..}     -> csCodegen options
-        Java {..}   -> javaCodegen options
-        Schema {..} -> writeSchema options
-        _           -> print options
+        Cpp {..}      -> cppCodegen options
+        Cs {..}       -> csCodegen options
+        Java {..}     -> javaCodegen options
+        Schema {..}   -> writeSchema options
+        Protobuf {..} -> protobufCodegen options
+        _             -> print options
 
 setJobs :: Maybe Int -> IO ()
 setJobs Nothing = return ()
@@ -192,3 +193,17 @@ javaCodegen Java {..} = do
                     createDir packageDir
                     LTIO.writeFile (packageDir </> javaFile) content
 javaCodegen _ = error "javaCodegen: impossible happened."
+
+protobufCodegen :: Options -> IO ()
+protobufCodegen Protobuf {..} = do
+    namespaceMapping <- parseNamespaceMappings namespace
+    concurrentlyFor_ files $ \file -> do
+        let baseName = takeBaseName file
+        bond <- parseFile import_dir file
+        let mappingContext = MappingContext idlTypeMapping [] namespaceMapping (bondNamespaces bond)
+        let (suffix, code) = protobuf_proto mappingContext baseName (bondImports bond) (bondDeclarations bond)
+        let fileName = baseName ++ suffix
+        createDirectoryIfMissing True output_dir
+        let content = if no_banner then code else (commonHeader "//" file fileName <> code)
+        LTIO.writeFile (output_dir </> fileName) content
+protobufCodegen _ = error "protobufCodegen: impossible happened."

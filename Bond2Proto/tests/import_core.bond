@@ -1,0 +1,8 @@
+import "bond/core/bond_const.bond"
+
+namespace bond2proto.test
+
+struct ImportCheck
+{
+    1: bool value;
+}

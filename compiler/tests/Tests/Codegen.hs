@@ -2,6 +2,7 @@
 -- Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 module Tests.Codegen
@@ -12,10 +13,13 @@ module Tests.Codegen
     , verifyExportsCodegen
     , verifyCsCodegen
     , verifyJavaCodegen
+    , verifyProtobufCodegen
+    , failProtobufCodegen
     ) where
 
 import System.FilePath
 import Control.Monad
+import Control.Exception (SomeException, try, evaluate)
 import Data.Monoid
 import Data.Maybe
 import Prelude
@@ -26,6 +30,7 @@ import qualified Data.ByteString.Char8 as BS
 import Text.PrettyPrint (render, text)
 import Test.Tasty
 import Test.Tasty.Golden.Advanced
+import Test.Tasty.HUnit (Assertion, assertFailure)
 import Language.Bond.Codegen.Templates
 import Language.Bond.Codegen.TypeMapping
 import Language.Bond.Syntax.Types (Bond(..), Import, Declaration(..))
@@ -174,6 +179,40 @@ javaCatTemplate mappingContext _ imports declarations =
           Struct {} -> Just $ class_java mappingContext imports declaration
           Enum {}   -> Just $ enum_java mappingContext declaration
           _         -> Nothing
+
+verifyProtobufCodegen :: FilePath -> TestTree
+verifyProtobufCodegen baseName =
+    goldenTest suffix readGolden codegen cmp updateGolden
+  where
+    (suffix, _) = protobuf_proto (MappingContext idlTypeMapping [] [] []) "" [] []
+    golden = "tests" </> "generated" </> "protobuf" </> baseName ++ suffix
+    readGolden = BS.readFile golden
+    updateGolden = BS.writeFile golden
+    codegen = do
+        (Bond imports namespaces declarations) <- parseBondFile [] $ "tests" </> "schema" </> baseName <.> "bond"
+        let mappingContext = MappingContext idlTypeMapping [] [] namespaces
+        let (_, code) = protobuf_proto mappingContext baseName imports declarations
+        return $ BS.pack $ unpack code
+    cmp x y = return $ if x == y then Nothing else Just $ diff x y
+    diff x y = render $ prettyContextDiff
+                            (text golden)
+                            (text "test output")
+                            (text . BS.unpack)
+                            (getContextDiff 3 (BS.lines x) (BS.lines y))
+
+failProtobufCodegen :: String -> FilePath -> Assertion
+failProtobufCodegen errMsg baseName = do
+    e <- try action
+    case e of
+        Left (_ :: SomeException) -> return ()
+        Right _ -> assertFailure errMsg
+  where
+    action = do
+        (Bond imports namespaces declarations) <- parseBondFile [] $ "tests" </> "schema" </> baseName <.> "bond"
+        let mappingContext = MappingContext idlTypeMapping [] [] namespaces
+        let (_, code) = protobuf_proto mappingContext baseName imports declarations
+        _ <- evaluate (LT.length code)
+        return ()
 
 cppExpandAliases :: Bool -> TypeMapping -> TypeMapping
 cppExpandAliases type_aliases_enabled = if type_aliases_enabled

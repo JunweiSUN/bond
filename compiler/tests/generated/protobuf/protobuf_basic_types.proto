@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package tests;
+
+message BasicTypes {
+    bool _bool = 1;
+    string _str = 2;
+    uint64 _uint64 = 10;
+    uint32 _uint16 = 11;
+    uint32 _uint32 = 12;
+    uint32 _uint8 = 13;
+    int32 _int8 = 14;
+    int32 _int16 = 15;
+    int32 _int32 = 16;
+    int64 _int64 = 17;
+    double _double = 18;
+    float _float = 20;
+    bytes _blob = 21;
+}

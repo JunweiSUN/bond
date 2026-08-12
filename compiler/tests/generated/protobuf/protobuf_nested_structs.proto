@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tests;
+
+message Inner {
+    string value = 1;
+}
+
+message Outer {
+    Inner nested = 1;
+    repeated Inner nested_list = 2;
+    map<string, Inner> nested_map = 3;
+}

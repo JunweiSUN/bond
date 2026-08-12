@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tests;
+
+enum Priority {
+    Low = 0;
+    Medium = 1;
+    High = 10;
+}
+
+enum StatusStartsNonZero {
+    STATUSSTARTSNONZERO_UNSPECIFIED = 0;
+    Active = 1;
+    Inactive = 2;
+    Deleted = 100;
+}
+
+message WithEnum {
+    Priority priority = 1;
+    StatusStartsNonZero status = 2;
+}

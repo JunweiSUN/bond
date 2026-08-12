@@ -50,6 +50,8 @@ module Language.Bond.Codegen.Templates
     , JavaFieldMapping(..)
     , class_java
     , enum_java
+      -- ** Protobuf
+    , protobuf_proto
     )
     where
 
@@ -63,6 +65,7 @@ import Language.Bond.Codegen.Cpp.Types_h
 import Language.Bond.Codegen.Cs.Types_cs
 import Language.Bond.Codegen.Java.Class_java
 import Language.Bond.Codegen.Java.Enum_java
+import Language.Bond.Codegen.Protobuf.Protobuf_proto
 -- redundant imports for haddock
 import Language.Bond.Codegen.TypeMapping
 import Language.Bond.Syntax.Types
