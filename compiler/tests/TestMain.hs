@@ -61,6 +61,15 @@ tests = testGroup "Compiler tests"
         , testCase "Invalid service base: struct" $ failBadSyntax "Should fail, struct can't be used as service base" "service_invalid_base_struct"
         , testCase "Invalid service base: type param" $ failBadSyntax "Should fail, type param can't be used as service base" "service_invalid_base_type_param"
         ]
+    , testGroup "Protobuf Codegen Failures"
+        [ testCase "wstring" $ failProtobufCodegen "Should fail for wstring" "protobuf_error_wstring"
+        , testCase "set" $ failProtobufCodegen "Should fail for set<T>" "protobuf_error_set"
+        , testCase "nullable" $ failProtobufCodegen "Should fail for nullable<T>" "protobuf_error_nullable"
+        , testCase "nested containers" $ failProtobufCodegen "Should fail for nested containers" "protobuf_error_nested_containers"
+        , testCase "generics" $ failProtobufCodegen "Should fail for generic struct" "protobuf_error_generics"
+        , testCase "non-default defaults" $ failProtobufCodegen "Should fail for non-default default values" "protobuf_error_defaults"
+        , testCase "event method" $ failProtobufCodegen "Should fail for event method" "protobuf_error_event"
+        ]
     , testGroup "Codegen"
         [ utilTestGroup,
           testGroup "C++"
@@ -212,6 +221,20 @@ tests = testGroup "Compiler tests"
                  , "--import-dir=tests/schema/imports"
                  ]
                  "import"
+            ]
+        , testGroup "Protobuf"
+            [ verifyProtobufCodegen "protobuf_basic_types"
+            , verifyProtobufCodegen "protobuf_empty"
+            , verifyProtobufCodegen "protobuf_enum"
+            , verifyProtobufCodegen "protobuf_inheritance"
+            , verifyProtobufCodegen "protobuf_containers"
+            , verifyProtobufCodegen "protobuf_field_modifiers"
+            , verifyProtobufCodegen "protobuf_defaults"
+            , verifyProtobufCodegen "protobuf_service"
+            , verifyProtobufCodegen "protobuf_streaming"
+            , verifyProtobufCodegen "protobuf_ordinals"
+            , verifyProtobufCodegen "protobuf_nested_structs"
+            , verifyProtobufCodegen "protobuf_namespace"
             ]
         ]
     ]

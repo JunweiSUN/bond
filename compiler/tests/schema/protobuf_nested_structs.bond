@@ -1,0 +1,13 @@
+namespace tests
+
+struct Inner
+{
+    1: string value;
+}
+
+struct Outer
+{
+    1: Inner nested;
+    2: list<Inner> nested_list;
+    3: map<string, Inner> nested_map;
+}

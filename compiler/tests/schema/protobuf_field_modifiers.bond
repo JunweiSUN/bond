@@ -1,0 +1,8 @@
+namespace tests
+
+struct FieldModifiers
+{
+    0: optional bool o;
+    1: required int16 r;
+    2: int32 m_nothing = nothing;
+}

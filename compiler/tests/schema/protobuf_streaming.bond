@@ -1,0 +1,14 @@
+namespace tests
+
+struct Item
+{
+    1: string name;
+    2: int32 value;
+}
+
+service StreamingService
+{
+    stream Item ListItems(Item);
+    Item ReduceItems(stream Item);
+    stream Item TransformItems(stream Item);
+}

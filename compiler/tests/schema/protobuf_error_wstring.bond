@@ -1,0 +1,6 @@
+namespace tests
+
+struct HasWString
+{
+    1: wstring wide;
+}

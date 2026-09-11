@@ -1,0 +1,15 @@
+namespace tests
+
+struct ZeroOrdinal
+{
+    0: string name;
+    1: int32 age;
+    2: bool active;
+}
+
+struct NonZeroOrdinal
+{
+    1: string name;
+    2: int32 age;
+    3: bool active;
+}

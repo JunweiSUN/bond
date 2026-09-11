@@ -1,0 +1,21 @@
+namespace tests
+
+enum Priority
+{
+    Low,
+    Medium,
+    High = 10
+}
+
+enum StatusStartsNonZero
+{
+    Active = 1,
+    Inactive = 2,
+    Deleted = 100
+}
+
+struct WithEnum
+{
+    1: Priority priority = Low;
+    2: StatusStartsNonZero status = Active;
+}

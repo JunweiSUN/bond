@@ -1,0 +1,11 @@
+namespace tests
+
+struct Containers
+{
+    1: list<int32> int_list;
+    2: vector<string> string_vector;
+    3: map<string, int32> string_int_map;
+    4: map<int64, double> long_double_map;
+    5: list<bool> bool_list;
+    6: vector<double> double_vector;
+}

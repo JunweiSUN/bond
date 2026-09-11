@@ -39,8 +39,7 @@ import Language.Bond.Codegen.TypeMapping
 -- | Returns an instance of <https://microsoft.github.io/bond/manual/compiler.html#runtime-schema SchemaDef>
 -- for the specified type. The SchemaDef is encoded using the Bond Simple JSON
 -- protocol and returned as a lazy 'BL.ByteString'.
-encodeSchemaDef :: Type -> BL.ByteString
-encodeSchemaDef = encode . makeSchemaDef
+-- NOTE: definition moved below TH splices for GHC 9.6+ compatibility.
 
 data SchemaDef =
     SchemaDef
@@ -203,9 +202,12 @@ makeSchemaDef root = SchemaDef $ map structDef structs
     resolveEnum Enum{..} n = fromIntegral . snd . fromJust $ find ((n ==) . fst) $ reifyEnumValues enumConstants
     resolveEnum _ _ = error "makeSchemaDef.resolveEnum: not a enum"
 
-$(deriveToJSON defaultOptions {omitNothingFields = True} ''SchemaDef)
-$(deriveToJSON defaultOptions {omitNothingFields = True} ''StructDef)
-$(deriveToJSON defaultOptions {omitNothingFields = True, fieldLabelModifier = dropWhile ('_' ==)} ''FieldDef)
-$(deriveToJSON defaultOptions {omitNothingFields = True} ''TypeDef)
-$(deriveToJSON defaultOptions {omitNothingFields = True} ''Metadata)
 $(deriveToJSON defaultOptions {omitNothingFields = True} ''Variant)
+$(deriveToJSON defaultOptions {omitNothingFields = True} ''Metadata)
+$(deriveToJSON defaultOptions {omitNothingFields = True} ''TypeDef)
+$(deriveToJSON defaultOptions {omitNothingFields = True, fieldLabelModifier = dropWhile ('_' ==)} ''FieldDef)
+$(deriveToJSON defaultOptions {omitNothingFields = True} ''StructDef)
+$(deriveToJSON defaultOptions {omitNothingFields = True} ''SchemaDef)
+
+encodeSchemaDef :: Type -> BL.ByteString
+encodeSchemaDef = encode . makeSchemaDef

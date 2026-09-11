@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tests;
+
+import "google/protobuf/empty.proto";
+
+message Request {
+    string query = 1;
+    int32 limit = 2;
+}
+
+message Response {
+    repeated string results = 1;
+    int32 total = 2;
+}
+
+service SimpleService {
+    rpc Search(Request) returns (Response);
+    rpc SaveItem(Request) returns (google.protobuf.Empty);
+    rpc GetAll(google.protobuf.Empty) returns (Response);
+}

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tests;
+
+message Defaults {
+    bool m_bool_false = 1;
+    int32 m_int_zero = 2;
+    double m_double_zero = 3;
+    string m_str_empty = 4;
+    optional int64 m_nothing = 5;
+    float m_float_zero = 6;
+    uint64 m_uint64_zero = 7;
+}

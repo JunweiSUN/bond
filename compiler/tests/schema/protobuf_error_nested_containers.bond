@@ -1,0 +1,6 @@
+namespace tests
+
+struct HasNestedContainers
+{
+    1: list<list<int32>> nested;
+}

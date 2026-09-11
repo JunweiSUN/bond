@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package tests;
+
+message Containers {
+    repeated int32 int_list = 1;
+    repeated string string_vector = 2;
+    map<string, int32> string_int_map = 3;
+    map<int64, double> long_double_map = 4;
+    repeated bool bool_list = 5;
+    repeated double double_vector = 6;
+}

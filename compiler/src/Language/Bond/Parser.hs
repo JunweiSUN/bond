@@ -22,6 +22,7 @@ module Language.Bond.Parser
     where
 
 import Control.Applicative hiding (some)
+import Control.Monad (void)
 import Control.Monad.Reader
 import Control.Monad.State.Lazy
 import Data.Function
@@ -473,4 +474,4 @@ isInBounds value _ = value >= (toInteger (minBound :: a)) && value <= (toInteger
 -- sets source position
 setSourcePos ::  MonadParsec e s m => SourcePos -> m ()
 setSourcePos src = updateParserState setPos
-    where setPos (State s o (PosState i o' _ t l)) =  State s o (PosState i o' src t l)
+    where setPos state = state { statePosState = (statePosState state) { pstateSourcePos = src } }

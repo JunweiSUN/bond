@@ -1,0 +1,6 @@
+namespace tests
+
+struct HasNullable
+{
+    1: nullable<string> value;
+}

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package tests;
+
+message ZeroOrdinal {
+    string name = 1;
+    int32 age = 2;
+    bool active = 3;
+}
+
+message NonZeroOrdinal {
+    string name = 1;
+    int32 age = 2;
+    bool active = 3;
+}

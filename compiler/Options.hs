@@ -77,6 +77,14 @@ data Options
         , runtime_schema :: Bool
         , service_inheritance_enabled :: Bool
         }
+    | Protobuf
+        { files :: [FilePath]
+        , import_dir :: [FilePath]
+        , output_dir :: FilePath
+        , namespace :: [String]
+        , jobs :: Maybe Int
+        , no_banner :: Bool
+        }
       deriving (Show, Data, Typeable)
 
 cpp :: Options
@@ -127,6 +135,18 @@ schema = Schema
     name "schema" &=
     help "Output the JSON representation of the schema"
 
+protobuf :: Options
+protobuf = Protobuf
+    { files = def &= typFile &= args
+    , import_dir = def &= typDir &= name "i" &= help "Add the directory to import search path"
+    , output_dir = "." &= typDir &= name "o" &= help "Output generated files into the specified directory"
+    , namespace = def &= typ "MAPPING" &= name "n" &= help "Custom namespace mapping in the form bond_namespace=language_namespace"
+    , jobs = def &= opt "0" &= typ "NUM" &= name "j" &= help "Run NUM jobs simultaneously (or '$ncpus' if no NUM is not given)"
+    , no_banner = def &= help "Omit the banner at the top of generated files"
+    } &=
+    name "protobuf" &=
+    help "Generate Protocol Buffers .proto files"
+
 slashNormalizeOption :: Options -> Options
 slashNormalizeOption Options = Options
 slashNormalizeOption o@Cpp{..}    = o { files = map slashNormalize files,
@@ -141,10 +161,13 @@ slashNormalizeOption o@Java{..}   = o { files = map slashNormalize files,
 slashNormalizeOption o@Schema{..} = o { files = map slashNormalize files,
                                         import_dir = map slashNormalize import_dir,
                                         output_dir = slashNormalize output_dir }
+slashNormalizeOption o@Protobuf{..} = o { files = map slashNormalize files,
+                                          import_dir = map slashNormalize import_dir,
+                                          output_dir = slashNormalize output_dir }
                                    
 
 mode :: Mode (CmdArgs Options)
-mode = cmdArgsMode $ modes [cpp, cs, java, schema] &=
+mode = cmdArgsMode $ modes [cpp, cs, java, schema, protobuf] &=
     program "gbc" &=
     help "Compile Bond schema file(s) and generate specified output. The schema file(s) can be in one of two formats: Bond IDL or JSON representation of the schema abstract syntax tree as produced by `gbc schema`. Multiple schema files can be specified either directly on the command line or by listing them in a text file passed to gbc via @listfile syntax." &=
     summary ("Bond Compiler " ++ showVersion version ++ ", (C) Microsoft")

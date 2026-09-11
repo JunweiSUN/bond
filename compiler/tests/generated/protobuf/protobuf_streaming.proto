@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package tests;
+
+message Item {
+    string name = 1;
+    int32 value = 2;
+}
+
+service StreamingService {
+    rpc ListItems(Item) returns (stream Item);
+    rpc ReduceItems(stream Item) returns (Item);
+    rpc TransformItems(stream Item) returns (stream Item);
+}

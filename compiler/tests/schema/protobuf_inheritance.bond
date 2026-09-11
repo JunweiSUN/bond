@@ -1,0 +1,18 @@
+namespace tests
+
+struct Base
+{
+    0: string name;
+    1: int32 value;
+}
+
+struct Derived : Base
+{
+    0: double extra;
+    1: bool flag;
+}
+
+struct DerivedAgain : Derived
+{
+    0: string tag;
+}
